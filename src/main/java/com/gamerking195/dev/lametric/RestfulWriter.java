@@ -44,6 +44,9 @@ public class RestfulWriter
 
 	private void createFiles()
 	{
+        System.out.println("");
+        System.out.println("=================BEGIN DEBUG=================");
+        System.out.println("");
 		File subDirectories = new File(filePath);
 		subDirectories.mkdirs();
 
@@ -59,6 +62,8 @@ public class RestfulWriter
 			msFile.setWritable(true);
 			msFile.setReadable(true);
 			FileWriter writer = new FileWriter(msFile);
+            System.out.println("MINESWINE: ");
+			System.out.println(getMineswineApp());
 			writer.write(getMineswineApp());
 			writer.close();
 		} 
@@ -66,6 +71,8 @@ public class RestfulWriter
 		{
 			e.printStackTrace();
 		}
+
+        System.out.println("");
 
 		File mcFile = new File(filePath+"/mojangapp.json");
 
@@ -80,6 +87,8 @@ public class RestfulWriter
 			mcFile.setReadable(true);
 
 			FileWriter writer = new FileWriter(mcFile);
+            System.out.println("MOJANG: ");
+			System.out.println(getMojangApp());
 			writer.write(getMojangApp());
 			writer.close();
 		} 
@@ -87,6 +96,9 @@ public class RestfulWriter
 		{
 			e.printStackTrace();
 		}
+
+        System.out.println("");
+        System.out.println("=================END DEBUG=================");
 	}
 
 	private String readFrom(String url) throws IOException 
@@ -172,13 +184,15 @@ public class RestfulWriter
 			for (JsonObject object : statuses)
 			{
 				Set<Map.Entry<String, JsonElement>> entries = object.entrySet();
-				for (Map.Entry<String, JsonElement> entry: entries) 
+				for (Map.Entry<String, JsonElement> entry : entries)
 				{
-					switch(entry.getValue().getAsString())
+                    System.out.println("SERVICE "+entry.getKey()+" IS "+entry.getValue().getAsString().replace("\"", ""));
+
+					switch(entry.getValue().getAsString().replace("\"", ""))
 					{
-					case "green": greenServices.add(entry.getKey());
-					case "yellow": yellowServices.add(entry.getKey());
-					case "red": redServices.add(entry.getKey());
+					case "green": greenServices.add(entry.getKey()); break;
+					case "yellow": yellowServices.add(entry.getKey()); break;
+					case "red": redServices.add(entry.getKey()); break;
 					}
 				}
 			}
@@ -196,6 +210,10 @@ public class RestfulWriter
 				FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
 				frames.addFrame(mojangLaunch);
 
+				System.out.println("RED SERVICES SIZE = " + redServices.size());
+                System.out.println("YELLOW SERVICES SIZE = " + yellowServices.size());
+                System.out.println("GREEN SERVICES SIZE = " + greenServices.size());
+
 				for (String string : redServices)
 				{
 					frames.addFrame(new Frame("SERVICE "+string+" UNAVAILABLE", redIcon));
@@ -206,10 +224,8 @@ public class RestfulWriter
 					frames.addFrame(new Frame("SERVICE "+string+" UNSTABLE", yellowIcon));
 				}
 
-				for (String string : greenServices)
-				{
-					frames.addFrame(new Frame("SERVICE "+string+" AVAILABLE", greenIcon));
-				}
+				if (greenServices.size() > 0)
+				    frames.addFrame(new Frame("ALL OTHER SERVICES AVAILABLE", greenIcon));
 
 				return gson.toJson(frames);
 			}
