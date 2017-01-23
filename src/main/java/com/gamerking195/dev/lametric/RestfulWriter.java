@@ -42,7 +42,7 @@ public class RestfulWriter
 		new Timer().scheduleAtFixedRate(restful.new RefreshTask(), 0L, 60 * 1000L);
 	}
 
-	public void createFiles()
+	private void createFiles()
 	{
 		File subDirectories = new File(filePath);
 		subDirectories.mkdirs();
@@ -177,7 +177,7 @@ public class RestfulWriter
 					switch(entry.getValue().getAsString())
 					{
 					case "green": greenServices.add(entry.getKey());
-					case "yelow": yellowServices.add(entry.getKey());
+					case "yellow": yellowServices.add(entry.getKey());
 					case "red": redServices.add(entry.getKey());
 					}
 				}

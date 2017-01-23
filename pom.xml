@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.gamerking195.dev.lametric</groupId>
 	<artifactId>RESTful-Lametric</artifactId>
-	<version>1.0</version>
+	<version>1.1</version>
 	<name>RESTful-Lametric</name>
 	<description>Manages the RESTful API that is used by all LaMetric time apps created by GamerKing195.</description>
 	<dependencies>

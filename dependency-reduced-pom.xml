@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.gamerking195.dev</groupId>
+  <groupId>com.gamerking195.dev.lametric</groupId>
   <artifactId>RESTful-Lametric</artifactId>
   <name>RESTful-Lametric</name>
-  <version>1.0</version>
+  <version>1.1</version>
   <description>Manages the RESTful API that is used by all LaMetric time apps created by GamerKing195.</description>
   <build>
     <defaultGoal>package</defaultGoal>
+    <finalName>Lametric-Manager</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -29,7 +30,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>com.gamerking195.dev.RestfulWriter</mainClass>
+                  <mainClass>com.gamerking195.dev.lametric.RestfulWriter</mainClass>
                 </transformer>
               </transformers>
             </configuration>
