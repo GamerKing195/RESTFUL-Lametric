@@ -2,10 +2,18 @@ package com.gamerking195.dev.lametric;
 
 public class Frame 
 {
-	public String text;
-	public String icon;
-	
-	public Frame(String text, String icon)
+	private String text;
+	private String icon;
+	private Integer index;
+    private Integer[] chartData;
+
+    Frame(Integer index, Integer[] chartData)
+    {
+        this.index = index;
+        this.chartData = chartData;
+    }
+
+    Frame(String text, String icon)
 	{
 		this.text = text;
 		this.icon = icon;

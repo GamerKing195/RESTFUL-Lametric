@@ -4,17 +4,17 @@ import java.util.ArrayList;
 
 public class FrameWrapper
 {
-	public ArrayList<Frame> frames;
-	
-	public FrameWrapper(ArrayList<Frame> frames)
+	FrameWrapper(ArrayList<Frame> frames)
 	{
 		this.frames = frames;
 	}
-	
-	public void addFrame(Frame frame)
-	{
-		frames.add(frame);
-	}
+
+    void addFrame(Frame frame)
+    {
+        frames.add(frame);
+    }
+
+	private ArrayList<Frame> frames;
 	
 	public ArrayList<Frame> getList()
 	{

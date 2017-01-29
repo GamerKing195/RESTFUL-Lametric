@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 public class RestfulWriter 
 {
@@ -32,6 +33,11 @@ public class RestfulWriter
 	private String pigIcon = "i2767";
 	private String mojangIcon = "i5848";
 
+	//Creates a FIFO queue with a maximum of 7 entries.
+    private CircularFifoQueue<Integer> queue = new CircularFifoQueue<>(7);
+
+    private boolean debug = false;
+
 	private Frame mineswineLaunch = new Frame("MINESWINE INFORMATION", pigIcon);
 	private Frame mojangLaunch = new Frame("MOJANG STATUS", mojangIcon);
 
@@ -44,12 +50,15 @@ public class RestfulWriter
 
 	private void createFiles()
 	{
-        System.out.println("");
-        System.out.println("=================BEGIN DEBUG=================");
-        System.out.println("");
+	    if (debug) {
+            System.out.println("");
+            System.out.println("=================BEGIN DEBUG=================");
+            System.out.println("");
+        }
 		File subDirectories = new File(filePath);
 		subDirectories.mkdirs();
 
+		//MINESWINE APP
 		File msFile = new File(filePath+"/mineswineapp.json");
 
 		if (msFile.exists())
@@ -62,9 +71,15 @@ public class RestfulWriter
 			msFile.setWritable(true);
 			msFile.setReadable(true);
 			FileWriter writer = new FileWriter(msFile);
-            System.out.println("MINESWINE: ");
-			System.out.println(getMineswineApp());
-			writer.write(getMineswineApp());
+
+			String mineswineStatus = getMineswineApp();
+
+            if (debug) {
+                System.out.println("MINESWINE: ");
+                System.out.println(mineswineStatus);
+            }
+
+			writer.write(mineswineStatus);
 			writer.close();
 		} 
 		catch (IOException e) 
@@ -72,8 +87,11 @@ public class RestfulWriter
 			e.printStackTrace();
 		}
 
-        System.out.println("");
+        if (debug) {
+            System.out.println("");
+        }
 
+        //MOJANG APP
 		File mcFile = new File(filePath+"/mojangapp.json");
 
 		if (mcFile.exists())
@@ -87,9 +105,15 @@ public class RestfulWriter
 			mcFile.setReadable(true);
 
 			FileWriter writer = new FileWriter(mcFile);
-            System.out.println("MOJANG: ");
-			System.out.println(getMojangApp());
-			writer.write(getMojangApp());
+
+			String mojangStatus = getMojangApp();
+
+            if (debug) {
+                System.out.println("MOJANG: ");
+                System.out.println(mojangStatus);
+            }
+
+			writer.write(mojangStatus);
 			writer.close();
 		} 
 		catch (IOException e) 
@@ -97,29 +121,26 @@ public class RestfulWriter
 			e.printStackTrace();
 		}
 
-        System.out.println("");
-        System.out.println("=================END DEBUG=================");
+
+        if (debug) {
+            System.out.println("");
+            System.out.println("=================END DEBUG=================");
+        }
 	}
 
 	private String readFrom(String url) throws IOException 
 	{
-		InputStream is = new URL(url).openStream();
-		try 
-		{
-			BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+        try (InputStream is = new URL(url).openStream()) {
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
 
-			StringBuilder sb = new StringBuilder();
-			int cp;
-			while ((cp = rd.read()) != -1) {
-				sb.append((char) cp);
-			}
-			return sb.toString();
-		}
-		finally
-		{
-			is.close();
-		}
-	}
+            StringBuilder sb = new StringBuilder();
+            int cp;
+            while ((cp = rd.read()) != -1) {
+                sb.append((char) cp);
+            }
+            return sb.toString();
+        }
+    }
 
 	private String getMineswineApp()
 	{
@@ -143,6 +164,8 @@ public class RestfulWriter
 			Integer maxCount = Integer.valueOf(split[2]);
 			Integer playerCount = Integer.valueOf(split[1]);
 
+			queue.add(playerCount);
+
 			FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
 			frames.addFrame(mineswineLaunch);
 			if (online)
@@ -150,8 +173,9 @@ public class RestfulWriter
 			else
 				frames.addFrame(new Frame("STATUS: Offline", redIcon));
 			frames.addFrame(new Frame("PLAYERS: "+playerCount+"/"+maxCount, pigIcon));
+            frames.addFrame(new Frame(frames.getList().size(), queue.toArray(new Integer[queue.size()])));
 
-			return gson.toJson(frames);
+            return gson.toJson(frames);
 		}
 		catch (IOException e) 
 		{
@@ -186,6 +210,8 @@ public class RestfulWriter
 				Set<Map.Entry<String, JsonElement>> entries = object.entrySet();
 				for (Map.Entry<String, JsonElement> entry : entries)
 				{
+
+                    if (debug)
                     System.out.println("SERVICE "+entry.getKey()+" IS "+entry.getValue().getAsString().replace("\"", ""));
 
 					switch(entry.getValue().getAsString().replace("\"", ""))
@@ -210,18 +236,20 @@ public class RestfulWriter
 				FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
 				frames.addFrame(mojangLaunch);
 
-				System.out.println("RED SERVICES SIZE = " + redServices.size());
-                System.out.println("YELLOW SERVICES SIZE = " + yellowServices.size());
-                System.out.println("GREEN SERVICES SIZE = " + greenServices.size());
+                if (debug) {
+                    System.out.println("RED SERVICES SIZE = " + redServices.size());
+                    System.out.println("YELLOW SERVICES SIZE = " + yellowServices.size());
+                    System.out.println("GREEN SERVICES SIZE = " + greenServices.size());
+                }
 
 				for (String string : redServices)
 				{
-					frames.addFrame(new Frame("SERVICE "+string+" UNAVAILABLE", redIcon));
+					frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNAVAILABLE", redIcon));
 				}
 
 				for (String string : yellowServices)
 				{
-					frames.addFrame(new Frame("SERVICE "+string+" UNSTABLE", yellowIcon));
+					frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNSTABLE", yellowIcon));
 				}
 
 				if (greenServices.size() > 0)
