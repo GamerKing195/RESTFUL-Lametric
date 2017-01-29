@@ -33,10 +33,10 @@ public class RestfulWriter
 	private String pigIcon = "i2767";
 	private String mojangIcon = "i5848";
 
-	//Creates a FIFO queue with a maximum of 7 entries.
+	//Create a FIFO queue with a maximum of 7 entries.
     private CircularFifoQueue<Integer> queue = new CircularFifoQueue<>(7);
 
-    private boolean debug = false;
+    private static boolean debug = true;
 
 	private Frame mineswineLaunch = new Frame("MINESWINE INFORMATION", pigIcon);
 	private Frame mojangLaunch = new Frame("MOJANG STATUS", mojangIcon);
@@ -45,7 +45,7 @@ public class RestfulWriter
 	{
 		RestfulWriter restful = new RestfulWriter();
 
-		new Timer().scheduleAtFixedRate(restful.new RefreshTask(), 0L, 60 * 1000L);
+		new Timer().scheduleAtFixedRate(restful.new RefreshTask(), 0L, debug ? 30 * 1000L : 60 * 1000L);
 	}
 
 	private void createFiles()
@@ -106,6 +106,9 @@ public class RestfulWriter
 
 			FileWriter writer = new FileWriter(mcFile);
 
+			if (debug)
+                System.out.println("SERVICES: ");
+
 			String mojangStatus = getMojangApp();
 
             if (debug) {
@@ -128,26 +131,12 @@ public class RestfulWriter
         }
 	}
 
-	private String readFrom(String url) throws IOException 
-	{
-        try (InputStream is = new URL(url).openStream()) {
-            BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
-
-            StringBuilder sb = new StringBuilder();
-            int cp;
-            while ((cp = rd.read()) != -1) {
-                sb.append((char) cp);
-            }
-            return sb.toString();
-        }
-    }
-
 	private String getMineswineApp()
 	{
 		Gson gson = new Gson();
 		try 
 		{
-			String serverInfo = readFrom("https://us.mc-api.net/v3/server/info/"+mineswineIp+"/csv");
+			String serverInfo = readFrom("https://us.mc-api.net/v3/server/ping/"+mineswineIp+"/csv");
 			String[] split = serverInfo.split(",");
 			boolean online = Boolean.valueOf(split[0]);
 			
@@ -164,7 +153,9 @@ public class RestfulWriter
 			Integer maxCount = Integer.valueOf(split[2]);
 			Integer playerCount = Integer.valueOf(split[1]);
 
-			queue.add(playerCount);
+			//if the latest entry is the current player count don't log it, only log differences.
+			if (queue.size() == 0 || !queue.get(queue.size()-1).equals(playerCount))
+                queue.add(playerCount);
 
 			FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
 			frames.addFrame(mineswineLaunch);
@@ -268,6 +259,20 @@ public class RestfulWriter
 
 		return gson.toJson(frames);
 	}
+
+    private String readFrom(String url) throws IOException
+    {
+        try (InputStream is = new URL(url).openStream()) {
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+
+            StringBuilder sb = new StringBuilder();
+            int cp;
+            while ((cp = rd.read()) != -1) {
+                sb.append((char) cp);
+            }
+            return sb.toString();
+        }
+    }
 
 	public class RefreshTask
 	extends TimerTask
