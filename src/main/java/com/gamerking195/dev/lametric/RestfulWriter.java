@@ -36,7 +36,7 @@ public class RestfulWriter
 	//Create a FIFO queue with a maximum of 7 entries.
     private CircularFifoQueue<Integer> queue = new CircularFifoQueue<>(7);
 
-    private static boolean debug = true;
+    private static boolean debug = false;
 
 	private Frame mineswineLaunch = new Frame("MINESWINE INFORMATION", pigIcon);
 	private Frame mojangLaunch = new Frame("MOJANG STATUS", mojangIcon);
@@ -138,6 +138,20 @@ public class RestfulWriter
 		{
 			String serverInfo = readFrom("https://us.mc-api.net/v3/server/ping/"+mineswineIp+"/csv");
 			String[] split = serverInfo.split(",");
+
+			if (split.length < 1) {
+                serverInfo = readFrom("https://eu.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
+                split = serverInfo.split(",");
+                if (split.length < 1) {
+                    FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+                    frames.addFrame(mineswineLaunch);
+                    frames.addFrame(new Frame("STATUS: Offline", redIcon));
+                    frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed.", redIcon));
+
+                    return gson.toJson(frames);
+                }
+            }
+
 			boolean online = Boolean.valueOf(split[0]);
 			
 			if (split[1].equalsIgnoreCase("ping-failed"))
@@ -169,11 +183,11 @@ public class RestfulWriter
             return gson.toJson(frames);
 		}
 		catch (IOException e) 
-		{
+        {
 			e.printStackTrace();
 		}
 
-		FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+		FrameWrapper frames = new FrameWrapper(new ArrayList<>());
 		frames.addFrame(mineswineLaunch);
 		frames.addFrame(new Frame("STATUS: Offline", redIcon));
 		frames.addFrame(new Frame("ERROR: JSON Parsing failed.", redIcon));
