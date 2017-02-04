@@ -21,225 +21,224 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 
-public class RestfulWriter 
+public class RestfulWriter
 {
-	private String filePath = System.getProperty("user.dir")+"/resources";
+    private String filePath = System.getProperty("user.dir")+"/resources";
 
-	private String mineswineIp = "play.mineswine.com";
+    private String mineswineIp = "play.mineswine.com";
 
-	private String greenIcon = "a3307";
-	private String yellowIcon = "a3273";
-	private String redIcon = "a3305";
-	private String pigIcon = "i2767";
-	private String mojangIcon = "i5848";
+    private String greenIcon = "a3307";
+    private String yellowIcon = "a3273";
+    private String redIcon = "a3305";
+    private String pigIcon = "i2767";
+    private String mojangIcon = "i5848";
 
-	//Create a FIFO queue with a maximum of 7 entries.
+    //Create a FIFO queue with a maximum of 7 entries.
     private CircularFifoQueue<Integer> queue = new CircularFifoQueue<>(7);
 
     private static boolean debug = false;
 
-	private Frame mineswineLaunch = new Frame("MINESWINE INFORMATION", pigIcon);
-	private Frame mojangLaunch = new Frame("MOJANG STATUS", mojangIcon);
+    private Frame mineswineLaunch = new Frame("MINESWINE INFORMATION", pigIcon);
+    private Frame mojangLaunch = new Frame("MOJANG STATUS", mojangIcon);
 
-	public static void main(String[] args)
-	{
-		RestfulWriter restful = new RestfulWriter();
+    public static void main(String[] args)
+    {
+        RestfulWriter restful = new RestfulWriter();
 
-		new Timer().scheduleAtFixedRate(restful.new RefreshTask(), 0L, debug ? 30 * 1000L : 60 * 1000L);
-	}
+        new Timer().scheduleAtFixedRate(restful.new RefreshTask(), 0L, debug ? 30 * 1000L : 60 * 1000L);
+    }
 
-	private void createFiles()
-	{
-	    if (debug) {
+    private void createFiles()
+    {
+        if (debug) {
             System.out.println("");
             System.out.println("=================BEGIN DEBUG=================");
             System.out.println("");
         }
-		File subDirectories = new File(filePath);
-		subDirectories.mkdirs();
+        File subDirectories = new File(filePath);
+        subDirectories.mkdirs();
 
-		//MINESWINE APP
-		File msFile = new File(filePath+"/mineswineapp.json");
+        //MINESWINE APP
+        File msFile = new File(filePath+"/mineswineapp.json");
 
-		if (msFile.exists())
-			msFile.delete();
+        if (msFile.exists())
+            msFile.delete();
 
-		try
-		{
-			msFile.createNewFile();
+        try
+        {
+            msFile.createNewFile();
 
-			msFile.setWritable(true);
-			msFile.setReadable(true);
-			FileWriter writer = new FileWriter(msFile);
+            msFile.setWritable(true);
+            msFile.setReadable(true);
+            FileWriter writer = new FileWriter(msFile);
 
-			String mineswineStatus = getMineswineApp();
+            String mineswineStatus = getMineswineApp();
 
             if (debug) {
                 System.out.println("MINESWINE: ");
                 System.out.println(mineswineStatus);
             }
 
-			writer.write(mineswineStatus);
-			writer.close();
-		} 
-		catch (IOException e) 
-		{
-			e.printStackTrace();
-		}
+            writer.write(mineswineStatus);
+            writer.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
 
         if (debug) {
             System.out.println("");
         }
 
         //MOJANG APP
-		File mcFile = new File(filePath+"/mojangapp.json");
+        File mcFile = new File(filePath+"/mojangapp.json");
 
-		if (mcFile.exists())
-			mcFile.delete();
+        if (mcFile.exists())
+            mcFile.delete();
 
-		try
-		{
-			mcFile.createNewFile();
+        try
+        {
+            mcFile.createNewFile();
 
-			mcFile.setWritable(true);
-			mcFile.setReadable(true);
+            mcFile.setWritable(true);
+            mcFile.setReadable(true);
 
-			FileWriter writer = new FileWriter(mcFile);
+            FileWriter writer = new FileWriter(mcFile);
 
-			if (debug)
+            if (debug)
                 System.out.println("SERVICES: ");
 
-			String mojangStatus = getMojangApp();
+            String mojangStatus = getMojangApp();
 
             if (debug) {
                 System.out.println("MOJANG: ");
                 System.out.println(mojangStatus);
             }
 
-			writer.write(mojangStatus);
-			writer.close();
-		} 
-		catch (IOException e) 
-		{
-			e.printStackTrace();
-		}
+            writer.write(mojangStatus);
+            writer.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
 
 
         if (debug) {
             System.out.println("");
             System.out.println("=================END DEBUG=================");
         }
-	}
+    }
 
-	private String getMineswineApp()
-	{
-		Gson gson = new Gson();
-		try 
-		{
-			String serverInfo = readFrom("https://us.mc-api.net/v3/server/ping/"+mineswineIp+"/csv");
-			String[] split = serverInfo.split(",");
+    private String getMineswineApp()
+    {
+        Gson gson = new Gson();
 
-			if (split.length < 1) {
+        String serverInfo = "NULL";
+
+        try {
+            serverInfo = readFrom("https://us.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
+        }
+        catch (IOException e) {
+            try {
                 serverInfo = readFrom("https://eu.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
-                split = serverInfo.split(",");
-                if (split.length < 1) {
-                    FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
-                    frames.addFrame(mineswineLaunch);
-                    frames.addFrame(new Frame("STATUS: Offline", redIcon));
-                    frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed.", redIcon));
+            }
+            catch(IOException ex) {
+                serverInfo = "ping-failed";
+            }
+        }
 
-                    return gson.toJson(frames);
+        String[] split = serverInfo.split(",");
+
+        if (split.length < 1) {
+            split = serverInfo.split(",");
+            if (split.length < 1 || serverInfo.equals("NULL")) {
+                FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+                frames.addFrame(mineswineLaunch);
+                frames.addFrame(new Frame("STATUS: Offline", redIcon));
+                frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed.", redIcon));
+
+                return gson.toJson(frames);
+            }
+        }
+
+        boolean online = Boolean.valueOf(split[0]);
+
+        if (split[1].equalsIgnoreCase("ping-failed"))
+        {
+            FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+            frames.addFrame(mineswineLaunch);
+            frames.addFrame(new Frame("STATUS: Offline", redIcon));
+            frames.addFrame(new Frame("ERROR: Server connection failed", redIcon));
+
+            return gson.toJson(frames);
+        }
+
+        Integer maxCount = Integer.valueOf(split[2]);
+        Integer playerCount = Integer.valueOf(split[1]);
+
+        //if the latest entry is the current player count don't log it, only log differences.
+        if (queue.size() == 0 || !queue.get(queue.size()-1).equals(playerCount))
+            queue.add(playerCount);
+
+        FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+        frames.addFrame(mineswineLaunch);
+        if (online)
+            frames.addFrame(new Frame("STATUS: Online", greenIcon));
+        else
+            frames.addFrame(new Frame("STATUS: Offline", redIcon));
+        frames.addFrame(new Frame("PLAYERS: "+playerCount+"/"+maxCount, pigIcon));
+        frames.addFrame(new Frame(frames.getList().size(), queue.toArray(new Integer[queue.size()])));
+
+        return gson.toJson(frames);
+    }
+
+    private String getMojangApp()
+    {
+        Gson gson = new Gson();
+
+        try
+        {
+            String statusCheck = readFrom("https://status.mojang.com/check");
+
+            Type type = new TypeToken<ArrayList<JsonObject>>(){}.getType();
+            ArrayList<JsonObject> statuses = gson.fromJson(statusCheck, type);
+
+            ArrayList<String> greenServices = new ArrayList<>();
+            ArrayList<String> yellowServices = new ArrayList<>();
+            ArrayList<String> redServices = new ArrayList<>();
+
+            for (JsonObject object : statuses)
+            {
+                Set<Map.Entry<String, JsonElement>> entries = object.entrySet();
+                for (Map.Entry<String, JsonElement> entry : entries)
+                {
+
+                    if (debug)
+                        System.out.println("SERVICE "+entry.getKey()+" IS "+entry.getValue().getAsString().replace("\"", ""));
+
+                    switch(entry.getValue().getAsString().replace("\"", ""))
+                    {
+                        case "green": greenServices.add(entry.getKey()); break;
+                        case "yellow": yellowServices.add(entry.getKey()); break;
+                        case "red": redServices.add(entry.getKey()); break;
+                    }
                 }
             }
 
-			boolean online = Boolean.valueOf(split[0]);
-			
-			if (split[1].equalsIgnoreCase("ping-failed"))
-			{
-				FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
-				frames.addFrame(mineswineLaunch);
-				frames.addFrame(new Frame("STATUS: Offline", redIcon));
-				frames.addFrame(new Frame("ERROR: Server connection failed", redIcon));
+            if (greenServices.size() == 10)
+            {
+                FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+                frames.addFrame(mojangLaunch);
+                frames.addFrame(new Frame("ALL SERVICES AVAILABLE", greenIcon));
 
-				return gson.toJson(frames);
-			}
-			
-			Integer maxCount = Integer.valueOf(split[2]);
-			Integer playerCount = Integer.valueOf(split[1]);
-
-			//if the latest entry is the current player count don't log it, only log differences.
-			if (queue.size() == 0 || !queue.get(queue.size()-1).equals(playerCount))
-                queue.add(playerCount);
-
-			FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
-			frames.addFrame(mineswineLaunch);
-			if (online)
-				frames.addFrame(new Frame("STATUS: Online", greenIcon));
-			else
-				frames.addFrame(new Frame("STATUS: Offline", redIcon));
-			frames.addFrame(new Frame("PLAYERS: "+playerCount+"/"+maxCount, pigIcon));
-            frames.addFrame(new Frame(frames.getList().size(), queue.toArray(new Integer[queue.size()])));
-
-            return gson.toJson(frames);
-		}
-		catch (IOException e) 
-        {
-			e.printStackTrace();
-		}
-
-		FrameWrapper frames = new FrameWrapper(new ArrayList<>());
-		frames.addFrame(mineswineLaunch);
-		frames.addFrame(new Frame("STATUS: Offline", redIcon));
-		frames.addFrame(new Frame("ERROR: JSON Parsing failed.", redIcon));
-
-		return gson.toJson(frames);
-	}
-
-	private String getMojangApp()
-	{
-		Gson gson = new Gson();
-
-		try
-		{
-			String statusCheck = readFrom("https://status.mojang.com/check");
-
-			Type type = new TypeToken<ArrayList<JsonObject>>(){}.getType();
-			ArrayList<JsonObject> statuses = gson.fromJson(statusCheck, type);
-
-			ArrayList<String> greenServices = new ArrayList<>();
-			ArrayList<String> yellowServices = new ArrayList<>();
-			ArrayList<String> redServices = new ArrayList<>();
-
-			for (JsonObject object : statuses)
-			{
-				Set<Map.Entry<String, JsonElement>> entries = object.entrySet();
-				for (Map.Entry<String, JsonElement> entry : entries)
-				{
-
-                    if (debug)
-                    System.out.println("SERVICE "+entry.getKey()+" IS "+entry.getValue().getAsString().replace("\"", ""));
-
-					switch(entry.getValue().getAsString().replace("\"", ""))
-					{
-					case "green": greenServices.add(entry.getKey()); break;
-					case "yellow": yellowServices.add(entry.getKey()); break;
-					case "red": redServices.add(entry.getKey()); break;
-					}
-				}
-			}
-
-			if (greenServices.size() == 10)
-			{
-				FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
-				frames.addFrame(mojangLaunch);
-				frames.addFrame(new Frame("ALL SERVICES AVAILABLE", greenIcon));
-
-				return gson.toJson(frames);
-			}
-			else
-			{
-				FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
-				frames.addFrame(mojangLaunch);
+                return gson.toJson(frames);
+            }
+            else
+            {
+                FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+                frames.addFrame(mojangLaunch);
 
                 if (debug) {
                     System.out.println("RED SERVICES SIZE = " + redServices.size());
@@ -247,32 +246,32 @@ public class RestfulWriter
                     System.out.println("GREEN SERVICES SIZE = " + greenServices.size());
                 }
 
-				for (String string : redServices)
-				{
-					frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNAVAILABLE", redIcon));
-				}
+                for (String string : redServices)
+                {
+                    frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNAVAILABLE", redIcon));
+                }
 
-				for (String string : yellowServices)
-				{
-					frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNSTABLE", yellowIcon));
-				}
+                for (String string : yellowServices)
+                {
+                    frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNSTABLE", yellowIcon));
+                }
 
-				if (greenServices.size() > 0)
-				    frames.addFrame(new Frame("ALL OTHER SERVICES AVAILABLE", greenIcon));
+                if (greenServices.size() > 0)
+                    frames.addFrame(new Frame("ALL OTHER SERVICES AVAILABLE", greenIcon));
 
-				return gson.toJson(frames);
-			}
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
-		FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
-		frames.addFrame(mojangLaunch);
-		frames.addFrame(new Frame("ERROR: Failed to parse json.", redIcon));
+                return gson.toJson(frames);
+            }
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }
+        FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+        frames.addFrame(mojangLaunch);
+        frames.addFrame(new Frame("ERROR: Failed to parse json.", redIcon));
 
-		return gson.toJson(frames);
-	}
+        return gson.toJson(frames);
+    }
 
     private String readFrom(String url) throws IOException
     {
@@ -288,13 +287,13 @@ public class RestfulWriter
         }
     }
 
-	public class RefreshTask
-	extends TimerTask
-	{
-		@Override
-		public void run() 
-		{
-			createFiles();
-		}	
-	}
+    public class RefreshTask
+            extends TimerTask
+    {
+        @Override
+        public void run()
+        {
+            createFiles();
+        }
+    }
 }
