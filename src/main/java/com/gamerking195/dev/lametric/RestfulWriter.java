@@ -165,7 +165,7 @@ public class RestfulWriter
 
         boolean online = Boolean.valueOf(split[0]);
 
-        if (split[1].equalsIgnoreCase("ping-failed"))
+        if (split[0].equalsIgnoreCase("ping-failed"))
         {
             FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
             frames.addFrame(mineswineLaunch);
