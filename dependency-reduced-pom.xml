@@ -4,7 +4,7 @@
   <groupId>com.gamerking195.dev.lametric</groupId>
   <artifactId>RESTful-Lametric</artifactId>
   <name>RESTful-Lametric</name>
-  <version>1.6</version>
+  <version>1.8</version>
   <description>Manages the RESTful API that is used by all LaMetric time apps created by GamerKing195.</description>
   <build>
     <defaultGoal>package</defaultGoal>

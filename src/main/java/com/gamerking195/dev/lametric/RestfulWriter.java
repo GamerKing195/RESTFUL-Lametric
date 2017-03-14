@@ -21,6 +21,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 
+/*
+ * Created by GamerKing195 on
+ */
 public class RestfulWriter
 {
     private String filePath = System.getProperty("user.dir")+"/resources";
@@ -40,6 +43,8 @@ public class RestfulWriter
 
     private Frame mineswineLaunch = new Frame("MINESWINE INFORMATION", pigIcon);
     private Frame mojangLaunch = new Frame("MOJANG STATUS", mojangIcon);
+
+    private int mineswineOfflineDuration = 0;
 
     public static void main(String[] args)
     {
@@ -165,12 +170,16 @@ public class RestfulWriter
 
         boolean online = Boolean.valueOf(split[0]);
 
-        if (split[0].equalsIgnoreCase("ping-failed"))
+        if (!online)
         {
+            mineswineOfflineDuration++;
             FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
             frames.addFrame(mineswineLaunch);
             frames.addFrame(new Frame("STATUS: Offline", redIcon));
-            frames.addFrame(new Frame("ERROR: Server connection failed", redIcon));
+            if (mineswineOfflineDuration == 1)
+                frames.addFrame(new Frame("OFFLINE FOR "+mineswineOfflineDuration+" MINUTE.", redIcon));
+            else
+                frames.addFrame(new Frame("OFFLINE FOR "+mineswineOfflineDuration+" MINUTES.", redIcon));
 
             return gson.toJson(frames);
         }
@@ -184,10 +193,7 @@ public class RestfulWriter
 
         FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
         frames.addFrame(mineswineLaunch);
-        if (online)
-            frames.addFrame(new Frame("STATUS: Online", greenIcon));
-        else
-            frames.addFrame(new Frame("STATUS: Offline", redIcon));
+        frames.addFrame(new Frame("STATUS: Online", greenIcon));
         frames.addFrame(new Frame("PLAYERS: "+playerCount+"/"+maxCount, pigIcon));
         frames.addFrame(new Frame(frames.getList().size(), queue.toArray(new Integer[queue.size()])));
 
