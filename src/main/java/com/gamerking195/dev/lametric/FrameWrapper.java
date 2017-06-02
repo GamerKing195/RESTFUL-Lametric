@@ -2,7 +2,7 @@ package com.gamerking195.dev.lametric;
 
 import java.util.ArrayList;
 
-public class FrameWrapper
+class FrameWrapper
 {
 	FrameWrapper(ArrayList<Frame> frames)
 	{
@@ -16,7 +16,7 @@ public class FrameWrapper
 
 	private ArrayList<Frame> frames;
 	
-	public ArrayList<Frame> getList()
+	ArrayList<Frame> getList()
 	{
 		return frames;
 	}

@@ -9,11 +9,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -22,16 +18,22 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 /*
- * Created by GamerKing195 on
+ * RESTful-Lametric
+ *
+ * Author: GamerKing195
+ *
+ * License: GNU General Public License
+ *
+ * Tl;Dr for GNU License,
+ *
+ * Take the code do what you want but you have to credit me and use the same license.
+ *
  */
 public class RestfulWriter
 {
     private String filePath = System.getProperty("user.dir")+"/resources";
 
-    private String mineswineIp = "play.mineswine.com";
-
     private String greenIcon = "a3307";
-    private String yellowIcon = "a3273";
     private String redIcon = "a3305";
     private String pigIcon = "i2767";
     private String mojangIcon = "i5848";
@@ -46,6 +48,8 @@ public class RestfulWriter
 
     private int mineswineOfflineDuration = 0;
 
+    private HashMap<String, Integer> serviceDowntimeMap = new HashMap<>();
+
     public static void main(String[] args)
     {
         RestfulWriter restful = new RestfulWriter();
@@ -53,6 +57,7 @@ public class RestfulWriter
         new Timer().scheduleAtFixedRate(restful.new RefreshTask(), 0L, debug ? 30 * 1000L : 60 * 1000L);
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private void createFiles()
     {
         if (debug) {
@@ -140,8 +145,9 @@ public class RestfulWriter
     {
         Gson gson = new Gson();
 
-        String serverInfo = "NULL";
+        String serverInfo;
 
+        String mineswineIp = "play.mineswine.com";
         try {
             serverInfo = readFrom("https://us.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
         }
@@ -156,16 +162,13 @@ public class RestfulWriter
 
         String[] split = serverInfo.split(",");
 
-        if (split.length < 1) {
-            split = serverInfo.split(",");
-            if (split.length < 1 || serverInfo.equals("NULL")) {
-                FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
-                frames.addFrame(mineswineLaunch);
-                frames.addFrame(new Frame("STATUS: Offline", redIcon));
-                frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed.", redIcon));
+        if (split.length < 4 || serverInfo.equals("NULL")) {
+            FrameWrapper frames = new FrameWrapper(new ArrayList<>());
+            frames.addFrame(mineswineLaunch);
+            frames.addFrame(new Frame("STATUS: Offline", redIcon));
+            frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed.", redIcon));
 
-                return gson.toJson(frames);
-            }
+            return gson.toJson(frames);
         }
 
         boolean online = Boolean.valueOf(split[0]);
@@ -173,13 +176,12 @@ public class RestfulWriter
         if (!online)
         {
             mineswineOfflineDuration++;
-            FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+            FrameWrapper frames = new FrameWrapper(new ArrayList<>());
             frames.addFrame(mineswineLaunch);
-            frames.addFrame(new Frame("STATUS: Offline", redIcon));
             if (mineswineOfflineDuration == 1)
-                frames.addFrame(new Frame("OFFLINE FOR "+mineswineOfflineDuration+" MINUTE.", redIcon));
+                frames.addFrame(new Frame("STATUS: OFFLINE FOR "+getTimeFancy(mineswineOfflineDuration), redIcon));
             else
-                frames.addFrame(new Frame("OFFLINE FOR "+mineswineOfflineDuration+" MINUTES.", redIcon));
+                frames.addFrame(new Frame("STATUS: OFFLINE FOR "+getTimeFancy(mineswineOfflineDuration), redIcon));
 
             return gson.toJson(frames);
         }
@@ -191,7 +193,7 @@ public class RestfulWriter
         if (queue.size() == 0 || !queue.get(queue.size()-1).equals(playerCount))
             queue.add(playerCount);
 
-        FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+        FrameWrapper frames = new FrameWrapper(new ArrayList<>());
         frames.addFrame(mineswineLaunch);
         frames.addFrame(new Frame("STATUS: Online", greenIcon));
         frames.addFrame(new Frame("PLAYERS: "+playerCount+"/"+maxCount, pigIcon));
@@ -220,7 +222,6 @@ public class RestfulWriter
                 Set<Map.Entry<String, JsonElement>> entries = object.entrySet();
                 for (Map.Entry<String, JsonElement> entry : entries)
                 {
-
                     if (debug)
                         System.out.println("SERVICE "+entry.getKey()+" IS "+entry.getValue().getAsString().replace("\"", ""));
 
@@ -235,7 +236,7 @@ public class RestfulWriter
 
             if (greenServices.size() == 10)
             {
-                FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+                FrameWrapper frames = new FrameWrapper(new ArrayList<>());
                 frames.addFrame(mojangLaunch);
                 frames.addFrame(new Frame("ALL SERVICES AVAILABLE", greenIcon));
 
@@ -243,7 +244,7 @@ public class RestfulWriter
             }
             else
             {
-                FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+                FrameWrapper frames = new FrameWrapper(new ArrayList<>());
                 frames.addFrame(mojangLaunch);
 
                 if (debug) {
@@ -254,12 +255,24 @@ public class RestfulWriter
 
                 for (String string : redServices)
                 {
-                    frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNAVAILABLE", redIcon));
+                    if (serviceDowntimeMap.containsKey(string))
+                        serviceDowntimeMap.put(string, serviceDowntimeMap.get(string)+1);
+                    else
+                        serviceDowntimeMap.put(string, 1);
+
+
+                    frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNAVAILABLE FOR "+getTimeFancy(serviceDowntimeMap.get(string)), redIcon));
                 }
 
                 for (String string : yellowServices)
                 {
-                    frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNSTABLE", yellowIcon));
+                    if (serviceDowntimeMap.containsKey(string))
+                        serviceDowntimeMap.put(string, serviceDowntimeMap.get(string)+1);
+                    else
+                        serviceDowntimeMap.put(string, 1);
+
+                    String yellowIcon = "a3273";
+                    frames.addFrame(new Frame("SERVICE "+string.toUpperCase()+" UNSTABLE FOR "+getTimeFancy(serviceDowntimeMap.get(string)), yellowIcon));
                 }
 
                 if (greenServices.size() > 0)
@@ -272,7 +285,7 @@ public class RestfulWriter
         {
             e.printStackTrace();
         }
-        FrameWrapper frames = new FrameWrapper(new ArrayList<Frame>());
+        FrameWrapper frames = new FrameWrapper(new ArrayList<>());
         frames.addFrame(mojangLaunch);
         frames.addFrame(new Frame("ERROR: Failed to parse json.", redIcon));
 
@@ -291,6 +304,50 @@ public class RestfulWriter
             }
             return sb.toString();
         }
+    }
+
+    private String getTimeFancy(int minutes) {
+
+        if (minutes == 0)
+            return "NULL";
+
+        int days = minutes / (60*24);
+
+        minutes -= days*(60*24);
+
+        System.out.println("MINUTES = "+minutes);
+
+        int hours = minutes / 60;
+
+        minutes -= hours*60;
+
+        System.out.println("MINUTES 2 = "+minutes);
+
+        StringBuilder sb = new StringBuilder();
+
+        if (days > 0) {
+            sb.append(days).append(days > 1 ? " DAYS" : " DAY");
+
+            if (hours == 0 && minutes == 0)
+                sb.append(".");
+            else
+                sb.append(", ");
+        }
+
+        if (hours > 0) {
+            sb.append(hours).append(hours > 1 ? " HOURS" : " HOUR");
+
+            if (minutes == 0)
+                sb.append(".");
+            else
+                sb.append(", AND ");
+        }
+
+        if (minutes > 0) {
+            sb.append(minutes).append(minutes > 1 ? " MINUTES." : " MINUTE.");
+        }
+
+        return sb.toString();
     }
 
     public class RefreshTask
