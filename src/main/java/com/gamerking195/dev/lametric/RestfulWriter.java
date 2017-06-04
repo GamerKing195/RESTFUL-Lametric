@@ -162,11 +162,18 @@ public class RestfulWriter
 
         String[] split = serverInfo.split(",");
 
-        if (split.length < 4 || serverInfo.equals("NULL")) {
+        if (split.length < 4) {
             FrameWrapper frames = new FrameWrapper(new ArrayList<>());
             frames.addFrame(mineswineLaunch);
             frames.addFrame(new Frame("STATUS: Offline", redIcon));
-            frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed.", redIcon));
+            frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed. ERROR #1", redIcon));
+
+            return gson.toJson(frames);
+        } else if (serverInfo.equals("NULL")) {
+            FrameWrapper frames = new FrameWrapper(new ArrayList<>());
+            frames.addFrame(mineswineLaunch);
+            frames.addFrame(new Frame("STATUS: Offline", redIcon));
+            frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed ERROR #2.", redIcon));
 
             return gson.toJson(frames);
         }
@@ -208,7 +215,13 @@ public class RestfulWriter
 
         try
         {
-            String statusCheck = readFrom("https://status.mojang.com/check");
+            String statusCheck;
+
+            if (debug)
+                statusCheck = "[{\"minecraft.net\":\"green\"},{\"session.minecraft.net\":\"green\"},{\"account.mojang.com\":\"green\"},{\"auth.mojang.com\":\"green\"},{\"skins.minecraft.net\":\"green\"},{\"authserver.mojang.com\":\"yellow\"},{\"sessionserver.mojang.com\":\"red\"},{\"api.mojang.com\":\"green\"},{\"textures.minecraft.net\":\"green\"},{\"mojang.com\":\"green\"}]";
+            else
+                statusCheck = readFrom("https://status.mojang.com/check");
+
 
             Type type = new TypeToken<ArrayList<JsonObject>>(){}.getType();
             ArrayList<JsonObject> statuses = gson.fromJson(statusCheck, type);
@@ -285,6 +298,7 @@ public class RestfulWriter
         {
             e.printStackTrace();
         }
+
         FrameWrapper frames = new FrameWrapper(new ArrayList<>());
         frames.addFrame(mojangLaunch);
         frames.addFrame(new Frame("ERROR: Failed to parse json.", redIcon));
@@ -307,21 +321,22 @@ public class RestfulWriter
     }
 
     private String getTimeFancy(int minutes) {
-
         if (minutes == 0)
             return "NULL";
 
         int days = minutes / (60*24);
 
-        minutes -= days*(60*24);
+        minutes %= (60*24);
 
-        System.out.println("MINUTES = "+minutes);
+        if (debug)
+            System.out.println("MINUTES = "+minutes);
 
         int hours = minutes / 60;
 
-        minutes -= hours*60;
+        minutes %= 60;
 
-        System.out.println("MINUTES 2 = "+minutes);
+        if (debug)
+            System.out.println("MINUTES 2 = "+minutes);
 
         StringBuilder sb = new StringBuilder();
 
