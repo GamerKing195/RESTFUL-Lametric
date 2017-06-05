@@ -149,31 +149,43 @@ public class RestfulWriter
 
         String mineswineIp = "play.mineswine.com";
         try {
-            serverInfo = readFrom("https://us.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
+            serverInfo = readFrom("http://us.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
         }
         catch (IOException e) {
+
+            e.printStackTrace();
+
             try {
-                serverInfo = readFrom("https://eu.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
+                serverInfo = readFrom("http://eu.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
             }
             catch(IOException ex) {
+                ex.printStackTrace();
+
                 serverInfo = "ping-failed";
             }
         }
 
         String[] split = serverInfo.split(",");
 
-        if (split.length < 4) {
+        if (serverInfo.equalsIgnoreCase("NULL")) {
             FrameWrapper frames = new FrameWrapper(new ArrayList<>());
             frames.addFrame(mineswineLaunch);
             frames.addFrame(new Frame("STATUS: Offline", redIcon));
-            frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed. ERROR #1", redIcon));
+            frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed ERROR #1.", redIcon));
 
             return gson.toJson(frames);
-        } else if (serverInfo.equals("NULL")) {
+        } else if (serverInfo.equalsIgnoreCase("ping-failed")) {
             FrameWrapper frames = new FrameWrapper(new ArrayList<>());
             frames.addFrame(mineswineLaunch);
             frames.addFrame(new Frame("STATUS: Offline", redIcon));
             frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed ERROR #2.", redIcon));
+
+            return gson.toJson(frames);
+        } else if (split.length < 4) {
+            FrameWrapper frames = new FrameWrapper(new ArrayList<>());
+            frames.addFrame(mineswineLaunch);
+            frames.addFrame(new Frame("STATUS: Offline", redIcon));
+            frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed ERROR #3.", redIcon));
 
             return gson.toJson(frames);
         }
