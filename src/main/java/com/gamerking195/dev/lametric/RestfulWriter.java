@@ -265,6 +265,8 @@ public class RestfulWriter
                 frames.addFrame(mojangLaunch);
                 frames.addFrame(new Frame("ALL SERVICES AVAILABLE", greenIcon));
 
+                serviceDowntimeMap.clear();
+
                 return gson.toJson(frames);
             }
             else
