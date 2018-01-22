@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
 import java.util.*;
 
 import com.google.gson.Gson;
@@ -31,7 +32,7 @@ import org.apache.commons.collections4.queue.CircularFifoQueue;
  */
 public class RestfulWriter
 {
-    private String filePath = System.getProperty("user.dir")+"/resources";
+    private String filePath = System.getProperty("user.home") + FileSystems.getDefault().getSeparator() + "resources";
 
     private String greenIcon = "a3307";
     private String redIcon = "a3305";
@@ -41,7 +42,7 @@ public class RestfulWriter
     //Create a FIFO queue with a maximum of 7 entries.
     private CircularFifoQueue<Integer> queue = new CircularFifoQueue<>(7);
 
-    private static boolean debug = false;
+    private static boolean debug = true;
 
     private Frame mineswineLaunch = new Frame("MINESWINE INFORMATION", pigIcon);
     private Frame mojangLaunch = new Frame("MOJANG STATUS", mojangIcon);
@@ -147,16 +148,16 @@ public class RestfulWriter
 
         String serverInfo;
 
+        //If these arent working try checking http vs https.
         String mineswineIp = "play.mineswine.com";
         try {
-            serverInfo = readFrom("http://us.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
+            serverInfo = readFrom("https://us.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
         }
         catch (IOException e) {
-
             e.printStackTrace();
 
             try {
-                serverInfo = readFrom("http://eu.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
+                serverInfo = readFrom("https://eu.mc-api.net/v3/server/ping/" + mineswineIp + "/csv");
             }
             catch(IOException ex) {
                 ex.printStackTrace();
@@ -167,7 +168,12 @@ public class RestfulWriter
 
         String[] split = serverInfo.split(",");
 
-        if (serverInfo.equalsIgnoreCase("NULL")) {
+        if (debug) {
+            System.out.println("INFO = " + serverInfo);
+            System.out.println("SPLIT-SIZE = " + split.length);
+        }
+
+        if (serverInfo.equalsIgnoreCase("null")) {
             FrameWrapper frames = new FrameWrapper(new ArrayList<>());
             frames.addFrame(mineswineLaunch);
             frames.addFrame(new Frame("STATUS: Offline", redIcon));
@@ -181,11 +187,18 @@ public class RestfulWriter
             frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed ERROR #2.", redIcon));
 
             return gson.toJson(frames);
-        } else if (split.length < 4) {
+        } else if (serverInfo.length() == 0) {
             FrameWrapper frames = new FrameWrapper(new ArrayList<>());
             frames.addFrame(mineswineLaunch);
             frames.addFrame(new Frame("STATUS: Offline", redIcon));
             frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed ERROR #3.", redIcon));
+
+            return gson.toJson(frames);
+        } else if (split.length < 4) {
+            FrameWrapper frames = new FrameWrapper(new ArrayList<>());
+            frames.addFrame(mineswineLaunch);
+            frames.addFrame(new Frame("STATUS: Offline", redIcon));
+            frames.addFrame(new Frame("ERROR: MC-API Issues/Text parsing failed ERROR #4.", redIcon));
 
             return gson.toJson(frames);
         }
@@ -320,8 +333,7 @@ public class RestfulWriter
         return gson.toJson(frames);
     }
 
-    private String readFrom(String url) throws IOException
-    {
+    private static String readFrom(String url) throws IOException {
         try (InputStream is = new URL(url).openStream()) {
             BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
 
