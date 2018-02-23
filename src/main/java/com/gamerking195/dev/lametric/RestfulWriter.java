@@ -29,10 +29,12 @@ import org.apache.commons.collections4.queue.CircularFifoQueue;
  *
  * Take the code do what you want but you have to credit me and use the same license.
  *
+ * But it would still be a good idea to read the license.
+ *
  */
 public class RestfulWriter
 {
-    private String filePath = System.getProperty("user.home") + FileSystems.getDefault().getSeparator() + "resources";
+    private String filePath = System.getProperty("user.home") + FileSystems.getDefault().getSeparator() + "public_html";
 
     private String greenIcon = "a3307";
     private String redIcon = "a3305";
@@ -242,11 +244,11 @@ public class RestfulWriter
         {
             String statusCheck;
 
-            if (debug)
+            /*if (debug)
                 statusCheck = "[{\"minecraft.net\":\"green\"},{\"session.minecraft.net\":\"green\"},{\"account.mojang.com\":\"green\"},{\"auth.mojang.com\":\"green\"},{\"skins.minecraft.net\":\"green\"},{\"authserver.mojang.com\":\"yellow\"},{\"sessionserver.mojang.com\":\"red\"},{\"api.mojang.com\":\"green\"},{\"textures.minecraft.net\":\"green\"},{\"mojang.com\":\"green\"}]";
-            else
-                statusCheck = readFrom("https://status.mojang.com/check");
+            else*/
 
+            statusCheck = readFrom("https://status.mojang.com/check");
 
             Type type = new TypeToken<ArrayList<JsonObject>>(){}.getType();
             ArrayList<JsonObject> statuses = gson.fromJson(statusCheck, type);
@@ -260,6 +262,9 @@ public class RestfulWriter
                 Set<Map.Entry<String, JsonElement>> entries = object.entrySet();
                 for (Map.Entry<String, JsonElement> entry : entries)
                 {
+                    if (entry.getKey().contains("skins"))
+                        continue;
+
                     if (debug)
                         System.out.println("SERVICE "+entry.getKey()+" IS "+entry.getValue().getAsString().replace("\"", ""));
 
@@ -272,7 +277,7 @@ public class RestfulWriter
                 }
             }
 
-            if (greenServices.size() == 10)
+            if (yellowServices.size() == 0 && redServices.size() == 0)
             {
                 FrameWrapper frames = new FrameWrapper(new ArrayList<>());
                 frames.addFrame(mojangLaunch);
